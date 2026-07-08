@@ -176,6 +176,67 @@ public class RangeSeriesAutoBoundsTests
     }
 
     [TestMethod]
+    public void RangeColumnSeries_AutoPadding_UsesFullSpanTick()
+    {
+        // Two series with the SAME full [low, high] span (0..99) but a different High
+        // sub-range must auto-fit the value axis identically — the data padding is a
+        // function of the whole span, not just the High track. Pre-fix the padding tick
+        // came from the High track alone (base.GetBounds runs before Low is merged), so
+        // series B (High in [50, 99]) got a finer tick and a tighter margin than series A
+        // (High in [0, 99]) despite covering the same range.
+        var lowIsOuter = FitValueBounds(new RangeColumnSeries<RangeValue>
+        {
+            Values = [new(0, 0), new(0, 99)],   // Low=0 const, High in [0, 99] → full [0, 99]
+        });
+        var highIsOuter = FitValueBounds(new RangeColumnSeries<RangeValue>
+        {
+            Values = [new(0, 50), new(49, 99)], // Low in [0, 49], High in [50, 99] → full [0, 99]
+        });
+
+        Assert.AreEqual(lowIsOuter.min, highIsOuter.min, 1e-9,
+            $"value-axis auto-min differs ({lowIsOuter.min} vs {highIsOuter.min}) for the same [0, 99] span; " +
+            "the padding tick must reflect the full span, not the High sub-range.");
+        Assert.AreEqual(lowIsOuter.max, highIsOuter.max, 1e-9,
+            $"value-axis auto-max differs ({lowIsOuter.max} vs {highIsOuter.max}) for the same [0, 99] span.");
+    }
+
+    [TestMethod]
+    public void RangeLineSeries_AutoPadding_UsesFullSpanTick()
+    {
+        // Same contract as the column variant — RangeLine folds the Low endpoint into the
+        // value axis the same way, so its padding tick must also reflect the full span.
+        var lowIsOuter = FitValueBounds(new RangeLineSeries<RangeValue>
+        {
+            Values = [new(0, 0), new(0, 99)],
+        });
+        var highIsOuter = FitValueBounds(new RangeLineSeries<RangeValue>
+        {
+            Values = [new(0, 50), new(49, 99)],
+        });
+
+        Assert.AreEqual(lowIsOuter.min, highIsOuter.min, 1e-9,
+            $"value-axis auto-min differs ({lowIsOuter.min} vs {highIsOuter.min}) for the same [0, 99] span.");
+        Assert.AreEqual(lowIsOuter.max, highIsOuter.max, 1e-9,
+            $"value-axis auto-max differs ({lowIsOuter.max} vs {highIsOuter.max}) for the same [0, 99] span.");
+    }
+
+    // Fits a vertical range series and returns the padded value-axis (Y) bounds.
+    private static (double min, double max) FitValueBounds(ISeries series)
+    {
+        var yAxis = new Axis();
+        var chart = new SKCartesianChart
+        {
+            Width = 1000,
+            Height = 500,
+            Series = [series],
+            XAxes = [new Axis()],
+            YAxes = [yAxis],
+        };
+        using var _ = chart.GetImage();
+        return (yAxis.VisibleDataBounds.Min, yAxis.VisibleDataBounds.Max);
+    }
+
+    [TestMethod]
     public void RangeRowSeries_DateTimeAxis_AutoMinReachesEarliestStart()
     {
         // The actual Gantt repro: project starts Jun 1, first task spans
