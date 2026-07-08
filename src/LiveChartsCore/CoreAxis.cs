@@ -1158,6 +1158,7 @@ public abstract class CoreAxis<TTextGeometry, TLineGeometry>
         }
 
         _ = activeSeparators.Remove(chart);
+        _ = _lastRenderer.Remove(chart); // keep the per-chart drawer cache consistent with the teardown
     }
 
     /// <inheritdoc cref="IChartElement.RemoveFromUI(Chart)"/>
