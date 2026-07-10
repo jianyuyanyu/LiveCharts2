@@ -177,7 +177,7 @@ public class AxisRendererTests
         public int Calls;
         public Bounds? LastBounds;
 
-        public Scaler GetScaler(ICartesianAxis axis, LvcPoint location, LvcSize size, Bounds? bounds)
+        public Scaler GetScaler(ICartesianAxis axis, Chart chart, LvcPoint location, LvcSize size, Bounds? bounds)
         {
             Calls++;
             LastBounds = bounds;
@@ -211,7 +211,7 @@ public class AxisRendererTests
         var engine = (CartesianChartEngine)chart.CoreChart;
 
         // the public data<->pixel path must map through the provider's scaler, not a default `new Scaler(...)`.
-        var expected = provider.GetScaler(xAxis, engine.DrawMarginLocation, engine.DrawMarginSize, null).ToPixels(2d);
+        var expected = provider.GetScaler(xAxis, engine, engine.DrawMarginLocation, engine.DrawMarginSize, null).ToPixels(2d);
         var actual = engine.ScaleDataToPixels(new LvcPointD(2d, 0d)).X;
         Assert.AreEqual(expected, actual, 1e-4, "ScaleDataToPixels must map through the custom provider");
     }
@@ -233,8 +233,9 @@ public class AxisRendererTests
 
         _ = chart.GetImage(); // establishes the axis orientation so a scaler can be built
 
+        var engine = (CartesianChartEngine)chart.CoreChart;
         var bounds = new Bounds();
-        _ = xAxis.GetScaler(new LvcPoint(0, 0), new LvcSize(100, 100), bounds);
+        _ = xAxis.GetScaler(engine, new LvcPoint(0, 0), new LvcSize(100, 100), bounds);
 
         Assert.AreSame(bounds, provider.LastBounds, "the optional Bounds argument must be forwarded to the provider untouched");
     }
@@ -268,7 +269,7 @@ public class AxisRendererTests
 
     private sealed class LogScalerProvider : IScalerProvider
     {
-        public Scaler GetScaler(ICartesianAxis axis, LvcPoint location, LvcSize size, Bounds? bounds) =>
+        public Scaler GetScaler(ICartesianAxis axis, Chart chart, LvcPoint location, LvcSize size, Bounds? bounds) =>
             new LogScaler(location, size, axis, bounds);
     }
 
@@ -287,7 +288,7 @@ public class AxisRendererTests
         };
         _ = chart.GetImage();
 
-        Assert.IsTrue(((ICartesianAxis)axis).GetScaler(new LvcPoint(0, 0), new LvcSize(100, 100)).IsLinear);
+        Assert.IsTrue(((ICartesianAxis)axis).GetScaler(chart.CoreChart, new LvcPoint(0, 0), new LvcSize(100, 100)).IsLinear);
     }
 
     [TestMethod]
