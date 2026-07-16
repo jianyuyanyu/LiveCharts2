@@ -1,0 +1,32 @@
+using LiveChartsCore;
+using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
+using LiveChartsCore.SkiaSharpView.Painting;
+using LiveChartsCore.VisualElements;
+using SkiaSharp;
+
+namespace ViewModelsSamples.Maps.MarkersOnMap;
+
+public class CityMarkerVisual : Visual
+{
+    private const float Size = 14f;
+
+    // GeoVisualElement writes the projected pixel onto this geometry, so do not set X or Y
+    // in Measure below or the marker would ignore the coordinate it is anchored to.
+    //
+    // The translate centers the circle on the projected point; without it the geometry's
+    // top-left corner would sit on the coordinate.
+    protected override CircleGeometry DrawnElement { get; } = new()
+    {
+        Width = Size,
+        Height = Size,
+        Fill = new SolidColorPaint(new SKColor(255, 87, 51)), // OrangeRed
+        Stroke = new SolidColorPaint(SKColors.White),
+        // A geometry that carries its own paints is drawn with the thickness set here, the one on
+        // the paint is ignored, so setting it there would silently draw a 1px hairline instead.
+        StrokeThickness = 2,
+        TranslateTransform = new(-Size / 2f, -Size / 2f),
+    };
+
+    protected override void Measure(Chart chart)
+    { }
+}

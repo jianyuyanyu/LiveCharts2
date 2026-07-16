@@ -1,12 +1,7 @@
-using LiveChartsCore.Drawing;
 using LiveChartsCore.Geo;
 using LiveChartsCore.Kernel;
 using LiveChartsCore.SkiaSharpView;
 using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
-using LiveChartsCore.SkiaSharpView.Painting;
-using LiveChartsCore.SkiaSharpView.VisualElements;
-using LiveChartsCore.VisualElements;
-using SkiaSharp;
 
 namespace ViewModelsSamples.Maps.MarkersOnMap;
 
@@ -43,27 +38,13 @@ public class ViewModel
 
     public IChartElement[] VisualElements { get; }
 
-    private static GeoVisualElement CityMarker(double longitude, double latitude)
-    {
-        // GeoVisualElement wraps any VisualElement and re-projects its
-        // (Longitude, Latitude) to screen pixels each Measure pass. The
-        // inner visual then draws at that pixel — pan / zoom / orthographic
-        // rotation all follow automatically.
-        //
-        // The inner Translate centers the bbox on the projected point;
-        // without it the circle's top-left corner would sit on the coord.
-        const float size = 14f;
-        return new GeoVisualElement(new GeometryVisual<CircleGeometry>
-        {
-            Width = size,
-            Height = size,
-            Fill = new SolidColorPaint(new SKColor(255, 87, 51)), // OrangeRed
-            Stroke = new SolidColorPaint(SKColors.White) { StrokeThickness = 2 },
-            Translate = new LvcPoint(-size / 2f, -size / 2f),
-        })
+    private static GeoVisualElement CityMarker(double longitude, double latitude) =>
+        // GeoVisualElement wraps a visual and re-projects its (Longitude, Latitude)
+        // to screen pixels each Measure pass. The inner visual then draws at that
+        // pixel — pan / zoom / orthographic rotation all follow automatically.
+        new(new CityMarkerVisual())
         {
             Longitude = longitude,
             Latitude = latitude,
         };
-    }
 }
