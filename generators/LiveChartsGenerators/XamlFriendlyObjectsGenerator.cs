@@ -20,6 +20,8 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 
+using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using LiveChartsGenerators.Definitions;
 using LiveChartsGenerators.Frameworks;
@@ -249,6 +251,16 @@ public class XamlFriendlyObjectsGenerator : IIncrementalGenerator
         if (alsoMap is not null && alsoMapPath is not null)
             members[alsoMapPath] = GetLiveChartsMembers(alsoMap);
 
+        // The wrapped type wins over a mapped member of the same name. Both are hosted as
+        // bindable properties named after the member (the map path is not a prefix), so a
+        // wrapper property that shadows a mapped one would emit the same name twice and not
+        // compile. Shadowing is deliberate: it lets the wrapped type host a property that
+        // forwards to the mapped object while adding behavior the mapped object can not
+        // (e.g. DrawnLabelVisual.Paint forwards to LabelGeometry.Paint but records the write
+        // so a theme can tell a user-set paint from an unset one).
+        var wrappedTypeMembers = new HashSet<string>(
+            members[string.Empty].OfType<IPropertySymbol>().Select(static x => x.Name));
+
         foreach (var pair in members)
         {
             var bindableProperties = new List<IPropertySymbol>();
@@ -259,6 +271,9 @@ public class XamlFriendlyObjectsGenerator : IIncrementalGenerator
                 if (member is IPropertySymbol property)
                 {
                     if (property.DeclaredAccessibility == Accessibility.Protected || property.IsStatic)
+                        continue;
+
+                    if (pair.Key != string.Empty && wrappedTypeMembers.Contains(property.Name))
                         continue;
 
                     var notExplicit = property.ExplicitInterfaceImplementations.Length == 0;
