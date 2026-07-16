@@ -29,6 +29,7 @@ using LiveChartsCore.SkiaSharpView.Drawing.Geometries;
 using LiveChartsCore.SkiaSharpView.Painting;
 using LiveChartsCore.SkiaSharpView.Painting.ImageFilters;
 using LiveChartsCore.SkiaSharpView.SKCharts;
+using LiveChartsCore.SkiaSharpView.VisualElements;
 using LiveChartsCore.Themes;
 using LiveChartsCore.VisualElements;
 using LiveChartsCore.VisualStates;
@@ -349,6 +350,11 @@ public static class ThemesExtensions
                                 new SolidColorPaint(theme.IsDark ? new(245, 245, 245) : new(45, 45, 45));
                     })
                     .HasRuleFor<BaseLabelVisual>(label =>
+                    {
+                        label.Paint =
+                            new SolidColorPaint(theme.IsDark ? new(200, 200, 200) : new(30, 30, 30));
+                    })
+                    .HasRuleFor<DrawnLabelVisual>(label =>
                     {
                         label.Paint =
                             new SolidColorPaint(theme.IsDark ? new(200, 200, 200) : new(30, 30, 30));

@@ -25,6 +25,7 @@ using LiveChartsCore.Drawing;
 using LiveChartsCore.Kernel;
 using LiveChartsCore.Kernel.Events;
 using LiveChartsCore.Painting;
+using LiveChartsCore.Themes;
 
 namespace LiveChartsCore.VisualElements;
 
@@ -67,6 +68,7 @@ public abstract class Visual : ChartElement, IInternalInteractable
         if (DrawnElement is null)
             throw new Exception($"{nameof(DrawnElement)} can not be null.");
 
+        ApplyTheme(chart);
         Measure(chart);
 
         if (_drawnTask is null || _drawnTask.IsEmpty)
@@ -105,4 +107,29 @@ public abstract class Visual : ChartElement, IInternalInteractable
     /// </summary>
     /// <param name="chart"></param>
     protected abstract void Measure(Chart chart);
+
+    /// <summary>
+    /// Applies the theme style to this visual, override it to be styled by the theme, normally
+    /// as <c>theme.ApplyStyleTo&lt;MyVisual&gt;(this)</c>. A style only sets the properties that
+    /// the user has not set, the arbitration is handled by the caller.
+    /// </summary>
+    /// <param name="theme">The theme.</param>
+    protected virtual void ApplyStyle(Theme theme) { }
+
+    // Called on every invalidation, and by the chart before it reads the title's size: the title
+    // is measured a full layout pass before it is invalidated, and a label with no paint can not
+    // be measured, so the theme has to have run by then. Applying the style is guarded by the
+    // theme id, so calling this more than once per theme costs nothing.
+    internal void ApplyTheme(Chart chart)
+    {
+        var theme = chart.GetTheme();
+
+        _isInternalSet = true;
+        if (_theme != theme.ThemeId)
+        {
+            ApplyStyle(theme);
+            _theme = theme.ThemeId;
+        }
+        _isInternalSet = false;
+    }
 }

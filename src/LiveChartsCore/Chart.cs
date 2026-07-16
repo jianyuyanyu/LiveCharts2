@@ -885,6 +885,10 @@ public abstract class Chart
         // more flexibility compared with VisualElement.
         if (View.Title?.ChartElementSource is Visual v)
         {
+            // The title is themed on invalidation, which does not happen until AddTitleToChart,
+            // a full layout pass later. GetHitBox below already needs the themed paint: a label
+            // with no paint can not be measured, so theme it now.
+            v.ApplyTheme(this);
             return v.GetHitBox().Size;
         }
 
@@ -905,6 +909,10 @@ public abstract class Chart
         // more flexibility compared with VisualElement.
         if (View.Title?.ChartElementSource is Visual v && v.DrawnElement is not null)
         {
+            // Not every path measured the title first (PolarChartEngine skips MeasureTitle when
+            // it fits to bounds), and GetHitBox below needs the themed paint.
+            v.ApplyTheme(this);
+
             var size = v.GetHitBox().Size;
             v.DrawnElement.X = ControlSize.Width * 0.5f - size.Width * 0.5f;
             v.DrawnElement.Y = 0;
